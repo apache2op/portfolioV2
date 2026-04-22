@@ -1,1 +1,1 @@
-# terminal gui based portfolio
+terminal gui based portfolio
