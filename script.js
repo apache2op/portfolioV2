@@ -95,96 +95,119 @@ async function bootSequence() {
 /* ---------------- COMMANDS ---------------- */
 const commands = {
   help: () => `Available commands:
-about, projects, skills, contact, 
-open [name | url]
+
+about, projects, skills, contact, clear
+open [name | url] , search [query]
 theme [${data.themes.join(" | ")}]
-clear
 `,
 
   about: () => data.about,
 
   projects: () => {
-  return data.projects.map(p => {
-    return `-------------------------------------------------------
+    const projectList = data.projects
+      .map((p) => {
+        return `
 '${p.name}'
 
-Description: ${p.description}
-Tech used: ${p.tech}
-GitHub repo: ${p.github ? `<a href="${p.github}" target="_blank" rel="noopener noreferrer">${p.github}</a>` : "N/A"}
-Live at: ${p.live ? `<a href="${p.live}" target="_blank" rel="noopener noreferrer">${p.live}</a>` : "N/A"}
--------------------------------------------------------`;
-  }).join("\n");
-},
+Description : ${p.description}
+
+Tech used : ${p.tech}
+
+GitHub repo : ${p.github ? `<a href="${p.github}" target="_blank" rel="noopener noreferrer">${p.github}</a>` : "N/A"}
+
+Live at : ${p.live ? `<a href="${p.live}" target="_blank" rel="noopener noreferrer">${p.live}</a>` : "N/A"}
+
+---------------------------------`;
+      })
+      .join("\n");
+
+      const moreProjects = `
+For more projects, do visit my <a href="https://github.com/apache2op?tab=repositories" target="_blank" rel="noopener noreferrer">GitHub</a>.
+`;
+
+  return projectList + moreProjects;
+      
+  },
 
   skills: () => data.skills.join(", "),
 
-contact: () => {
-  return data.contact.map(c => {
-    let value = c.value;
+  contact: () => {
+    return data.contact
+      .map((c) => {
+        const type = c.type.toLowerCase();
 
-    // 📧 Email → mailto
-    if (c.type.toLowerCase() === "email") {
-      value = `<a href="mailto:${value}?subject=Hello%20Ayush&body=Hi%20Ayush,%20I%20saw%20your%20portfolio...">${value}</a>`;
+        // Email
+        if (type === "email") {
+          return `<a href="mailto:${c.value}?subject=Hello%20Ayush&body=Hi%20Ayush,%20I%20saw%20your%20portfolio...">${c.type}</a>`;
+        }
+
+        // Links
+        if (c.value.startsWith("http")) {
+          return `<a href="${c.value}" target="_blank" rel="noopener noreferrer">${c.type}</a>`;
+        }
+
+        return c.type;
+      })
+      .join("&nbsp;&nbsp;&nbsp;&nbsp;"); // spacing between items
+  },
+
+  open: async (arg) => {
+    if (!arg) return "Usage: open [name | url]";
+
+    arg = arg.trim();
+
+    let url = "";
+
+    // direct URL
+    if (arg.startsWith("http")) {
+      url = arg;
     }
 
-    // 🌐 Links → clickable
-    else if (value.startsWith("http")) {
-      value = `<a href="${value}" target="_blank" rel="noopener noreferrer">${value}</a>`;
+    // known links only
+    else if (data.links && data.links[arg.toLowerCase()]) {
+      url = data.links[arg.toLowerCase()];
+    } else {
+      return `Unknown target: ${arg}\nUse 'search ${arg}' instead.`;
     }
 
-    return `${c.type}: ${value}`;
-  }).join("\n");
-},
+    window.open(url, "_blank");
 
-open: async (arg) => {
-  if (!arg) return "Usage: open [name | url]";
+    await sleep(300);
+    return `Opening ${arg} in a new tab.`;
+  },
 
-  arg = arg.toLowerCase();
+  search: async (arg) => {
+    if (!arg) return "Usage: search [query]";
 
-  let url = "";
+    const url = `https://www.google.com/search?q=${encodeURIComponent(arg)}`;
 
-  // direct URL
-  if (arg.startsWith("http")) {
-    url = arg;
-  }
-
-  // from JSON
-  else if (data.links && data.links[arg]) {
-    url = data.links[arg];
-  }
-
-  // fallback search
-  else {
-    url = `https://www.google.com/search?q=${encodeURIComponent(arg)}`;
     print(`Searching "${arg}"...`);
-  }
 
-  // open tab
-  window.open(url, "_blank");
+    window.open(url, "_blank");
 
-  // simulate delay
-  await new Promise(res => setTimeout(res, 500));
-
-  return "Opened in new tab.";
-},
+    await sleep(400);
+    return "Results opened in new tab.";
+  },
 
   theme: (arg) => {
-  if (!arg) {
-    return `Available themes:\n${data.themes.join(", ")}`;
-  }
+    if (!arg) {
+      return `Available themes:\n${data.themes.join(", ")}`;
+    }
 
-  if (!data.themes.includes(arg)) {
-    return "Invalid theme. Type 'theme' to see options.";
-  }
+    arg = arg.trim().toLowerCase();
 
-  // remove all themes
-  document.body.classList.remove(...data.themes);
+    if (!data.themes.includes(arg)) {
+      return "Invalid theme. Type 'theme' to see options.";
+    }
 
-  // apply selected theme
-  document.body.classList.add(arg);
+    // remove all themes
+    document.body.classList.remove(...data.themes);
 
-  return `Theme changed to ${arg}`;
-},
+    // apply selected theme
+    document.body.classList.add(arg);
+
+    return `Theme changed to ${arg}`;
+  },
 
   clear: () => {
     output.innerHTML = "";
@@ -192,22 +215,31 @@ open: async (arg) => {
   },
 
   run: async (arg) => {
-    if (arg !== "portfolio") return "Try 'run portfolio'";
+  const sub = arg.trim().toLowerCase();   // ✅ normalize input
 
-    if (booted) return "Portfolio already running.";
+  if (sub !== "portfolio") {
+    return "Try 'run portfolio'";
+  }
 
-    askingName = true;
-    return "Enter username:";
-  },
+  if (booted) return "Portfolio already running.";
+
+  askingName = true;
+  return "Enter your username:";
+},
 };
 
 /* ---------------- RUN COMMAND ---------------- */
 async function runCommand(value) {
-  const [cmd, ...args] = value.split(" ");
-  const arg = args.join(" ");
+  const cleaned = value.trim().replace(/\s+/g, " ");
+
+  const parts = cleaned.split(" ");
+  const cmd = (parts.shift() || "").toLowerCase();
+  const arg = parts.join(" ");
 
   // 🚫 BLOCK commands before boot
-  if (!booted && cmd !== "run" && cmd !== "theme" && cmd !== "clear") {
+  const allowedBeforeBoot = ["run", "theme", "clear"];
+
+  if (!booted && !allowedBeforeBoot.includes(cmd)) {
     return "Command not found. Type 'run portfolio' to start.";
   }
 
@@ -217,7 +249,6 @@ async function runCommand(value) {
     return "Command not found. Type 'help'";
   }
 }
-
 /* ---------------- INPUT HANDLER ---------------- */
 input.addEventListener("keydown", async (e) => {
   // ENTER
@@ -238,24 +269,24 @@ input.addEventListener("keydown", async (e) => {
 
     // USERNAME STEP
     if (askingName) {
-  input.disabled = true;   // 🔒 LOCK INPUT
+      input.disabled = true; // 🔒 LOCK INPUT
 
-  username = value || "guest";
-  askingName = false;
+      username = value || "guest";
+      askingName = false;
 
-  await bootSequence();
-  booted = true;
+      await bootSequence();
+      booted = true;
 
-  updatePrompt();
+      updatePrompt();
 
-  print(`Welcome ${username}`);
-  print("Type 'help' to explore");
+      print(`Welcome ${username}`);
+      print("Type 'help' to explore");
 
-  input.disabled = false;  // 🔓 UNLOCK INPUT
-  input.focus();
+      input.disabled = false; // 🔓 UNLOCK INPUT
+      input.focus();
 
-  return;
-}
+      return;
+    }
 
     // NORMAL COMMAND
     const result = await runCommand(value);
