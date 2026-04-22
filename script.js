@@ -152,29 +152,35 @@ For more projects, do visit my <a href="https://github.com/apache2op?tab=reposit
   },
 
   open: async (arg) => {
-    if (!arg) return "Usage: open [name | url]";
+  if (!arg) return "Usage: open [name | url]";
 
-    arg = arg.trim();
+  arg = arg.trim();
+  let url = "";
 
-    let url = "";
+  // ✅ already a full URL
+  if (/^https?:\/\//i.test(arg)) {
+    url = arg;
+  }
 
-    // direct URL
-    if (arg.startsWith("http")) {
-      url = arg;
-    }
+  // ✅ domain like "example.com" or "portfolio.site.co.in"
+  else if (/^[\w-]+\.[\w.-]+$/.test(arg)) {
+    url = "https://" + arg;
+  }
 
-    // known links only
-    else if (data.links && data.links[arg.toLowerCase()]) {
-      url = data.links[arg.toLowerCase()];
-    } else {
-      return `Unknown target: ${arg}\nUse 'search ${arg}' instead.`;
-    }
+  // ✅ known links
+  else if (data.links && data.links[arg.toLowerCase()]) {
+    url = data.links[arg.toLowerCase()];
+  }
 
-    window.open(url, "_blank");
+  else {
+    return `Unknown target: ${arg}\nUse 'search ${arg}' instead.`;
+  }
 
-    await sleep(300);
-    return `Opening ${arg} in a new tab.`;
-  },
+  window.open(url, "_blank");
+
+  await sleep(300);
+  return `Opening '${url}' in a new tab`;
+},
 
   search: async (arg) => {
     if (!arg) return "Usage: search [query]";
