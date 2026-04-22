@@ -1,2 +1,1 @@
-# portfolioV2
-adding later
+# terminal gui based portfolio
