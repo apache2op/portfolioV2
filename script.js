@@ -1,3 +1,4 @@
+
 const input = document.getElementById("input");
 const output = document.getElementById("output");
 const terminal = document.querySelector(".terminal");
@@ -96,7 +97,7 @@ async function bootSequence() {
 const commands = {
   help: () => `Available commands:
 
-about, projects, skills, contact, clear
+about, projects, skills, contact, download, clear
 open [name | url] , search [query]
 theme [${data.themes.join(" | ")}]
 `,
@@ -194,6 +195,32 @@ For more projects, do visit my <a href="https://github.com/apache2op?tab=reposit
     await sleep(400);
     return "Results opened in new tab.";
   },
+
+  download: async (arg) => {
+  arg = arg.trim().toLowerCase();
+
+  if (!arg) {
+    return `Usage: download [file]\nAvailable: resume`;
+  }
+
+  if (arg !== "resume") {
+    return `Unknown target: ${arg}\nUsage: download resume`;
+  }
+
+  const file = "Ayush_Das_Resume.pdf";
+
+  const link = document.createElement("a");
+  link.href = file;
+  link.download = "Ayush_Das_Resume.pdf";
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  await sleep(300);
+  return `Downloading resume... 
+<a href="${file}" download>Click here if it doesn't start</a>`;
+},
 
   theme: (arg) => {
     if (!arg) {
@@ -325,6 +352,8 @@ input.addEventListener("keydown", async (e) => {
   print("Type 'run portfolio' to start.");
   input.focus();
 })();
+
+
 
 
 
