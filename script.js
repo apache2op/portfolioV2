@@ -325,3 +325,119 @@ input.addEventListener("keydown", async (e) => {
   print("Type 'run portfolio' to start.");
   input.focus();
 })();
+
+
+
+function initDemoRunner({ inputEl, runCommand, printOutput, sleep }) {
+  let isRunning = false;
+  let stopDemo = false;
+
+  function attachInterrupt() {
+    const stop = () => (stopDemo = true);
+    document.addEventListener("keydown", stop);
+    document.addEventListener("touchstart", stop);
+
+    return () => {
+      document.removeEventListener("keydown", stop);
+      document.removeEventListener("touchstart", stop);
+    };
+  }
+
+  async function typeCommand(cmd) {
+  inputEl.value = "";
+
+  // typing effect
+  for (let i = 0; i < cmd.length; i++) {
+    if (stopDemo) return;
+    inputEl.value += cmd[i];
+    await sleep(50); //typing speed
+  }
+
+  await sleep(150);
+
+  // print like real terminal
+  printOutput(
+    `<span class="prompt">${promptEl.textContent}</span><span class="command">${cmd}</span>`
+  );
+
+  inputEl.value = "";
+
+  // 🔥 HANDLE USERNAME STEP PROPERLY
+  if (askingName) {
+    inputEl.disabled = true;
+
+    username = cmd || "guest";
+    askingName = false;
+
+    await bootSequence(); // ⏳ wait for loading
+    booted = true;
+
+    updatePrompt();
+
+    printOutput(`Welcome ${username}`);
+    printOutput("Type 'help' to explore");
+
+    inputEl.disabled = false;
+    inputEl.focus();
+
+    return;
+  }
+
+  const result = await runCommand(cmd);
+  printOutput(result);
+}
+
+  async function runDemo(sequence = []) {
+    if (isRunning) return;
+
+    isRunning = true;
+    stopDemo = false;
+
+    const detach = attachInterrupt();
+    await sleep(300);
+
+    for (let cmd of sequence) {
+      if (stopDemo) break;
+      await typeCommand(cmd);
+      await sleep(400);
+    }
+
+    detach();
+    isRunning = false;
+  }
+
+  return { runDemo };
+}
+
+const demo = initDemoRunner({
+  inputEl: input,
+  runCommand,
+  printOutput: print,
+  sleep,
+});
+
+const sequence = [
+  "run portfolio",
+  "user",
+  "about",
+  "skills",
+  "projects",
+  "contact",
+  "help"
+];
+
+window.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("runDemoBtn");
+
+  if (btn) {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;           // 🔒 disable immediately
+      btn.textContent = "Running..."; // optional UI feedback
+
+      await demo.runDemo(sequence);
+
+      // ❌ keep it disabled permanently
+      btn.textContent = "Completed";
+    });
+  }
+});
