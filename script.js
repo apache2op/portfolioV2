@@ -215,7 +215,7 @@ For more projects, do visit my <a href="https://github.com/apache2op?tab=reposit
     // 📱 Mobile fallback → open file
     window.open(file, "_blank");
 
-    return `Opening resume... 
+    return `Opening resume
 Use your browser menu to download it.`;
   }
 
@@ -230,7 +230,7 @@ Use your browser menu to download it.`;
 
   await sleep(300);
 
-  return `Downloading resume... 
+  return `Downloading resume
 <a href="${file}" download>Click here if it doesn't start</a>`;
 },
 
