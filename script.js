@@ -97,8 +97,8 @@ async function bootSequence() {
 const commands = {
   help: () => `Available commands:
 
-about, projects, skills, contact, download, clear
-open [name | url] , search [query]
+about, projects, skills, contact, clear
+open [name | url] , search [query], download [file]
 theme [${data.themes.join(" | ")}]
 `,
 
@@ -200,7 +200,7 @@ For more projects, do visit my <a href="https://github.com/apache2op?tab=reposit
   arg = arg.trim().toLowerCase();
 
   if (!arg) {
-    return `Usage: download [file]\nAvailable: resume`;
+    return `Usage: download [file]\nAvailable file: resume`;
   }
 
   if (arg !== "resume") {
@@ -218,7 +218,7 @@ For more projects, do visit my <a href="https://github.com/apache2op?tab=reposit
   document.body.removeChild(link);
 
   await sleep(300);
-  return `Downloading resume... 
+  return `Downloading resume
 <a href="${file}" download>Click here if it doesn't start</a>`;
 },
 
@@ -461,7 +461,7 @@ window.addEventListener("DOMContentLoaded", () => {
   if (btn) {
     btn.addEventListener("click", async () => {
       btn.disabled = true;           // 🔒 disable immediately
-      btn.textContent = "Running..."; // optional UI feedback
+      btn.textContent = "Running"; // optional UI feedback
 
       await demo.runDemo(sequence);
 
