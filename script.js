@@ -200,7 +200,7 @@ For more projects, do visit my <a href="https://github.com/apache2op?tab=reposit
   arg = arg.trim().toLowerCase();
 
   if (!arg) {
-    return `Usage: download [file]\nAvailable file: resume`;
+    return `Usage: download [file]\nAvailable: resume`;
   }
 
   if (arg !== "resume") {
@@ -209,6 +209,17 @@ For more projects, do visit my <a href="https://github.com/apache2op?tab=reposit
 
   const file = "Ayush_Das_Resume.pdf";
 
+  const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+
+  if (isMobile) {
+    // 📱 Mobile fallback → open file
+    window.open(file, "_blank");
+
+    return `Opening resume... 
+Use your browser menu to download it.`;
+  }
+
+  // 💻 Desktop → force download
   const link = document.createElement("a");
   link.href = file;
   link.download = "Ayush_Das_Resume.pdf";
@@ -218,7 +229,8 @@ For more projects, do visit my <a href="https://github.com/apache2op?tab=reposit
   document.body.removeChild(link);
 
   await sleep(300);
-  return `Downloading resume
+
+  return `Downloading resume... 
 <a href="${file}" download>Click here if it doesn't start</a>`;
 },
 
